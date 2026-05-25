@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>To Do List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      font-family: 'Inter', sans-serif;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .brand-name { font-size: 15px; font-weight: 600; color: #e0e0e0; letter-spacing: 0.3px; }
+    .top-right { display: flex; align-items: center; gap: 12px; }
+    .date-chip { font-size: 11px; color: #444; }
+
+    .ava {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #1a2e24; border: 1.5px solid #1D9E75;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600; color: #1D9E75;
+    }
+
+    .logout {
+      background: transparent; border: 1px solid #2a2a2a;
+      color: #555; padding: 5px 12px; border-radius: 20px;
+      cursor: pointer; font-size: 11px; font-family: 'Inter', sans-serif;
+    }
+    .logout:hover { border-color: #444; color: #aaa; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px; }
+    .grid-full { grid-column: 1 / -1; }
+
+    .card { background: #111; border: 1px solid #1a1a1a; border-radius: 14px; padding: 16px; }
+
+    .card-head {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+
+    .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #ffffff; }
+
+    .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+    .badge.teal { background: #001a10; color: #1D9E75; }
+    .badge.fossil { background: #1e1800; color: #BAB6B3; }
+
+    .today-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .today-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: #0d0d0d;
+      border-radius: 8px; border: 1px solid #171717;
+    }
+
+    .t-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+    .t-dot.pending { background: #BAB6B3; }
+    .t-text { font-size: 15px; color: #c0c0c0; flex: 1; }
+
+    .habit-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    .cal-nav {
+      background: transparent; border: 1px solid #1e1e1e;
+      color: #555; width: 26px; height: 26px; border-radius: 6px;
+      cursor: pointer; font-size: 14px; display: flex;
+      align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .cal-nav:hover { border-color: #333; color: #aaa; }
+
+    .cal-month { font-size: 13px; font-weight: 500; color: #c0c0c0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+    .cal-dow {
+      font-size: 10px; color: #333; text-align: center;
+      padding: 4px 0; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .cal-day {
+      aspect-ratio: 1; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #fcf9f9; cursor: pointer;
+      position: relative; transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .cal-day:hover { background: #1a1a1a; color: #c0c0c0; }
+    .cal-day.today { background: #1a2e24; border-color: #1D9E75; color: #1D9E75; font-weight: 600; }
+    .cal-day.has-task::after {
+      content: ''; position: absolute; bottom: 3px;
+      left: 50%; transform: translateX(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #EF9F27;
+    }
+    .cal-day.today.has-task::after { background: #fff; }
+    .cal-day.empty { cursor: default; }
+    .cal-day.selected { background: #1e1e1e; border-color: #333; color: #e0e0e0; }
+
+    .task-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 260px; overflow-y: auto;
+    }
+    .task-list::-webkit-scrollbar { width: 3px; }
+    .task-list::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 2px; }
+
+    .task-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 13px; background: #0d0d0d;
+      border-radius: 8px; border: 1px solid #171717; transition: border 0.15s;
+    }
+    .task-row:hover { border-color: #222; }
+    .task-row.done { opacity: 0.4; }
+
+    .chk {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid #252525; background: transparent;
+      cursor: pointer; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; color: transparent; transition: all 0.15s;
+    }
+    .chk:hover { border-color: #1D9E75; }
+    .chk.on { background: #1D9E75; border-color: #1D9E75; color: #fff; }
+
+    .task-title {
+      flex: 1; font-size: 17px; color: #c0c0c0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .task-row.done .task-title { text-decoration: line-through; color: #333; }
+    .task-due { font-size: 10px; color: #333; white-space: nowrap; }
+
+    .icon-btn {
+      background: transparent; border: 1px solid #1e1e1e;
+      border-radius: 5px; padding: 3px 8px; cursor: pointer;
+      font-size: 10px; color: #555; font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .icon-btn.edit:hover { font-size: 20px;border-color: #1D9E75; color: #1D9E75; }
+    .icon-btn.del-btn:hover { font-size: 20px;border-color: #E24B4A; color: #E24B4A; }
+
+    .empty-s { font-size: 12px; color: #2a2a2a; text-align: center; padding: 16px 0; }
+
+    .fab {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #1D9E75; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; color: #fff; font-weight: 300;
+      transition: all 0.15s; z-index: 100;
+      box-shadow: 0 4px 20px rgba(29,158,117,0.3);
+    }
+    .fab:hover { background: #0F6E56; transform: scale(1.08); }
+    .fab:active { transform: scale(0.95); }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.82);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+
+    .modal {
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 16px; padding: 24px;
+      width: 90%; max-width: 360px;
+    }
+
+    .modal-title { font-size: 13px; font-weight: 600; color: #d0d0d0; margin-bottom: 16px; }
+
+    .mi {
+      width: 100%; background: #0d0d0d;
+      border: 1px solid #1e1e1e; border-radius: 8px;
+      padding: 10px 12px; color: #e0e0e0;
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      outline: none; margin-bottom: 8px; resize: none;
+    }
+    .mi:focus { border-color: #1D9E75; }
+    .mi::placeholder { color: #2a2a2a; }
+
+    .mbtns { display: flex; gap: 8px; margin-top: 4px; }
+
+    .msave {
+      flex: 1; padding: 10px; background: #1D9E75;
+      color: #fff; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+    }
+    .msave:hover { background: #0F6E56; }
+
+    .mcancel {
+      flex: 1; padding: 10px; background: transparent;
+      color: #444; border: 1px solid #1e1e1e;
+      border-radius: 8px; cursor: pointer;
+      font-size: 12px; font-family: 'Inter', sans-serif;
+    }
+    .mcancel:hover { color: #aaa; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand-name">To Do List</span>
+    <div class="top-right">
+      <span class="date-chip" id="dchip"></span>
+      <div class="ava">A</div>
+      <button class="logout" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Today's tasks</span>
+        <span class="badge teal" id="today-badge">0</span>
+      </div>
+      <div class="today-list" id="today-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Habits</span>
+        <button onclick="openAddHabit()" style="background:transparent;border:1px solid #1e1e1e;color:#1D9E75;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;">+ Add habit</button>
+      </div>
+      <div class="habit-list" id="habit-list"></div>
+    </div>
+
+    <div class="card grid-full">
+      <div class="cal-head">
+        <span class="card-title">Calendar</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="cal-nav" onclick="prevMonth()">&#8249;</button>
+          <span class="cal-month" id="cal-month"></span>
+          <button class="cal-nav" onclick="nextMonth()">&#8250;</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <div class="card grid-full">
+      <div class="card-head">
+        <span class="card-title" id="tasks-section-title">All tasks</span>
+        <span class="badge fossil" id="pending-badge">0</span>
+      </div>
+      <div class="task-list" id="task-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div class="modal-overlay" id="edit-overlay">
+    <div class="modal">
+      <div class="modal-title">Edit task</div>
+      <input class="mi" type="text" id="edit-title" placeholder="Task title" maxlength="60" />
+      <textarea class="mi" id="edit-desc" rows="2" placeholder="Description (optional)"></textarea>
+      <input class="mi" type="date" id="edit-date" />
+      <div class="mbtns">
+        <button class="mcancel" onclick="closeEditModal()">Cancel</button>
+        <button class="msave" onclick="saveEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-title">Add new task</div>
+      <input class="mi" type="text" id="m-title" placeholder="Task title" maxlength="60" />
+      <textarea class="mi" id="m-desc" rows="2" placeholder="Description (optional)"></textarea>
+      <input class="mi" type="date" id="m-date" />
+      <div class="mbtns">
+        <button class="mcancel" onclick="closeModal()">Cancel</button>
+        <button class="msave" onclick="saveTask()">Add task</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openModal()">+</button>
+
+  <script>
+    if (localStorage.getItem("adminLoggedIn") !== "true") {
+      window.location.href = "index.html";
+    }
+
+    var today = new Date();
+    var todayStr = today.getFullYear() + '-'
+      + String(today.getMonth() + 1).padStart(2, '0') + '-'
+      + String(today.getDate()).padStart(2, '0');
+
+    var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var monthsShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    document.getElementById('dchip').textContent = dayNames[today.getDay()] + ', ' + today.getDate() + ' ' + monthsShort[today.getMonth()];
+    document.getElementById('m-date').value = todayStr;
+
+    var calYear = today.getFullYear();
+    var calMonth = today.getMonth();
+    var selectedDate = todayStr;
+    var editingId = null;
+
+    /* ── LOCALSTORAGE ── */
+    function saveTasks() {
+      localStorage.setItem('todo_tasks', JSON.stringify(tasks));
+      localStorage.setItem('todo_nid', nid);
+    }
+
+    function saveHabits() {
+      localStorage.setItem('todo_habits', JSON.stringify(habits));
+      localStorage.setItem('todo_habitId', habitId);
+    }
+
+    function loadData() {
+      var savedTasks = localStorage.getItem('todo_tasks');
+      var savedNid = localStorage.getItem('todo_nid');
+      var savedHabits = localStorage.getItem('todo_habits');
+      var savedHabitId = localStorage.getItem('todo_habitId');
+      if (savedTasks) tasks = JSON.parse(savedTasks);
+      if (savedNid) nid = parseInt(savedNid);
+      if (savedHabits) habits = JSON.parse(savedHabits);
+      if (savedHabitId) habitId = parseInt(savedHabitId);
+    }
+
+    var tasks = [];
+    var nid = 1;
+
+    var habits = [
+      { id: 1, name: "Morning study", days: [0,0,0,0,0,0,0] },
+      { id: 2, name: "LeetCode practice", days: [0,0,0,0,0,0,0] },
+      { id: 3, name: "Read 30 mins", days: [0,0,0,0,0,0,0] }
+    ];
+    var habitId = 4;
+
+    loadData(); // load saved data on page open
+
+    var dayLabels = ["M","T","W","T","F","S","S"];
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ── HABITS ── */
+    function renderHabits() {
+      var el = document.getElementById('habit-list');
+      if (!habits.length) {
+        el.innerHTML = '<div class="empty-s">No habits yet — click + Add habit</div>';
+        return;
+      }
+      el.innerHTML = habits.map(function(h) {
+        var done = h.days.filter(function(d) { return d; }).length;
+        var pct = Math.round(done / 7 * 100);
+        return '<div style="padding:10px 12px;background:#0d0d0d;border-radius:10px;border:1px solid #171717;display:flex;flex-direction:column;gap:6px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<span style="font-size:12px;color:#c0c0c0;flex:1;">' + esc(h.name) + '</span>'
+          + '<span style="font-size:11px;color:#444;">' + pct + '%</span>'
+          + '<button onclick="openEditHabit(' + h.id + ')" class="icon-btn edit">Edit</button>'
+          + '<button onclick="deleteHabit(' + h.id + ')" class="icon-btn del-btn">Delete</button>'
+          + '</div>'
+          + '<div style="height:3px;background:#1a1a1a;border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:#1D9E75;border-radius:2px;transition:width 0.4s;"></div></div>'
+          + '<div style="display:flex;gap:4px;">'
+          + h.days.map(function(on, di) {
+              return '<div onclick="toggleHabit(' + h.id + ',' + di + ')" style="width:24px;height:24px;border-radius:5px;border:1px solid '
+                + (on ? '#1D9E75' : '#1e1e1e') + ';background:' + (on ? '#1a2e24' : '#111')
+                + ';display:flex;align-items:center;justify-content:center;font-size:8px;color:'
+                + (on ? '#1D9E75' : '#333') + ';cursor:pointer;font-weight:500;">'
+                + dayLabels[di] + '</div>';
+            }).join('')
+          + '</div></div>';
+      }).join('');
+    }
+
+    function toggleHabit(id, di) {
+      habits = habits.map(function(h) {
+        if (h.id !== id) return h;
+        var d = h.days.slice();
+        d[di] = d[di] ? 0 : 1;
+        return Object.assign({}, h, { days: d });
+      });
+      saveHabits();
+      renderHabits();
+    }
+
+    function deleteHabit(id) {
+      if (!confirm("Delete this habit?")) return;
+      habits = habits.filter(function(h) { return h.id !== id; });
+      saveHabits();
+      renderHabits();
+    }
+
+    function openAddHabit() {
+      var name = prompt("Enter habit name:");
+      if (!name || !name.trim()) return;
+      habits.push({ id: habitId++, name: name.trim(), days: [0,0,0,0,0,0,0] });
+      saveHabits();
+      renderHabits();
+    }
+
+    function openEditHabit(id) {
+      var h = habits.find(function(h) { return h.id === id; });
+      var name = prompt("Edit habit name:", h.name);
+      if (!name || !name.trim()) return;
+      habits = habits.map(function(h) {
+        return h.id === id ? Object.assign({}, h, { name: name.trim() }) : h;
+      });
+      saveHabits();
+      renderHabits();
+    }
+
+    /* ── CALENDAR ── */
+    function renderCalendar() {
+      document.getElementById('cal-month').textContent = months[calMonth] + ' ' + calYear;
+      var first = new Date(calYear, calMonth, 1).getDay();
+      var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      var taskDates = {};
+      tasks.forEach(function(t) { if (t.date) taskDates[t.date] = true; });
+      var html = '';
+      ['S','M','T','W','T','F','S'].forEach(function(d) { html += '<div class="cal-dow">' + d + '</div>'; });
+      for (var i = 0; i < first; i++) html += '<div class="cal-day empty"></div>';
+      for (var day = 1; day <= daysInMonth; day++) {
+        var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        var cls = 'cal-day';
+        if (dateStr === todayStr) cls += ' today';
+        if (taskDates[dateStr]) cls += ' has-task';
+        if (dateStr === selectedDate && dateStr !== todayStr) cls += ' selected';
+        html += '<div class="' + cls + '" onclick="selectDate(\'' + dateStr + '\')">' + day + '</div>';
+      }
+      document.getElementById('cal-grid').innerHTML = html;
+    }
+
+    function selectDate(ds) {
+      selectedDate = ds;
+      renderCalendar();
+      var filtered = tasks.filter(function(t) { return t.date === ds; });
+      var d = new Date(ds + 'T00:00:00');
+      document.getElementById('tasks-section-title').textContent = ds === todayStr ? 'All tasks' : d.getDate() + ' ' + monthsShort[d.getMonth()] + ' tasks';
+      document.getElementById('pending-badge').textContent = filtered.filter(function(t) { return !t.done; }).length;
+      document.getElementById('task-list').innerHTML = filtered.length
+        ? filtered.map(taskRowHTML).join('')
+        : '<div class="empty-s">No tasks on this date</div>';
+    }
+
+    function prevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+    function nextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+    /* ── TASKS ── */
+    function taskRowHTML(t) {
+      return '<div class="task-row' + (t.done ? ' done' : '') + '">'
+        + '<button class="chk' + (t.done ? ' on' : '') + '" onclick="toggle(' + t.id + ')">' + (t.done ? '✓' : '') + '</button>'
+        + '<span class="task-title">' + esc(t.title) + '</span>'
+        + (t.date && t.date !== todayStr ? '<span class="task-due">' + t.date.slice(5) + '</span>' : '')
+        + '<button class="icon-btn edit" onclick="openEditModal(' + t.id + ')">Edit</button>'
+        + '<button class="icon-btn del-btn" onclick="del(' + t.id + ')">Delete</button>'
+        + '</div>';
+    }
+
+    function openEditModal(id) {
+      var t = tasks.find(function(t) { return t.id === id; });
+      editingId = id;
+      document.getElementById('edit-title').value = t.title;
+      document.getElementById('edit-desc').value = t.desc || '';
+      document.getElementById('edit-date').value = t.date || todayStr;
+      document.getElementById('edit-overlay').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      editingId = null;
+      document.getElementById('edit-overlay').style.display = 'none';
+    }
+
+    function saveEdit() {
+      var title = document.getElementById('edit-title').value.trim();
+      if (!title) return;
+      tasks = tasks.map(function(t) {
+        return t.id === editingId ? Object.assign({}, t, {
+          title: title,
+          desc: document.getElementById('edit-desc').value.trim(),
+          date: document.getElementById('edit-date').value || todayStr
+        }) : t;
+      });
+      saveTasks();
+      closeEditModal();
+      renderAll();
+    }
+
+    function renderToday() {
+      var tod = tasks.filter(function(t) { return t.date === todayStr; });
+      document.getElementById('today-badge').textContent = tod.filter(function(t) { return !t.done; }).length;
+      document.getElementById('today-list').innerHTML = tod.length
+        ? tod.map(function(t) {
+            return '<div class="today-item">'
+              + '<div class="t-dot' + (t.done ? '' : ' pending') + '"></div>'
+              + '<span class="t-text" style="' + (t.done ? 'text-decoration:line-through;color:#333;' : '') + '">' + esc(t.title) + '</span>'
+              + '<button class="chk' + (t.done ? ' on' : '') + '" onclick="toggle(' + t.id + ')" style="flex-shrink:0;">' + (t.done ? '✓' : '') + '</button>'
+              + '</div>';
+          }).join('')
+        : '<div class="empty-s">No tasks today</div>';
+    }
+
+    function renderAll() {
+      renderToday();
+      renderCalendar();
+      var list = selectedDate === todayStr ? tasks : tasks.filter(function(t) { return t.date === selectedDate; });
+      document.getElementById('tasks-section-title').textContent = selectedDate === todayStr ? 'All tasks' : (function() {
+        var d = new Date(selectedDate + 'T00:00:00');
+        return d.getDate() + ' ' + monthsShort[d.getMonth()] + ' tasks';
+      })();
+      document.getElementById('pending-badge').textContent = tasks.filter(function(t) { return !t.done; }).length;
+      document.getElementById('task-list').innerHTML = list.length
+        ? list.map(taskRowHTML).join('')
+        : '<div class="empty-s">No tasks on this date</div>';
+    }
+
+    function toggle(id) {
+      tasks = tasks.map(function(t) { return t.id === id ? Object.assign({}, t, { done: !t.done }) : t; });
+      saveTasks();
+      renderAll();
+    }
+
+    function del(id) {
+      if (!confirm("Delete this task?")) return;
+      tasks = tasks.filter(function(t) { return t.id !== id; });
+      saveTasks();
+      renderAll();
+    }
+
+    function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+    function saveTask() {
+      var title = document.getElementById('m-title').value.trim();
+      if (!title) { document.getElementById('m-title').style.borderColor = '#993333'; return; }
+      document.getElementById('m-title').style.borderColor = '#1e1e1e';
+      tasks.unshift({
+        id: nid++,
+        title: title,
+        desc: document.getElementById('m-desc').value.trim(),
+        date: document.getElementById('m-date').value || todayStr,
+        done: false
+      });
+      document.getElementById('m-title').value = '';
+      document.getElementById('m-desc').value = '';
+      document.getElementById('m-date').value = todayStr;
+      saveTasks();
+      closeModal();
+      renderAll();
+    }
+
+    function logout() {
+      localStorage.removeItem("adminLoggedIn");
+      window.location.href = "index.html";
+    }
+
+    document.getElementById('m-title').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') saveTask();
+    });
+
+    renderHabits();
+    renderAll();
+  </script>
+
+</body>
+</html>
